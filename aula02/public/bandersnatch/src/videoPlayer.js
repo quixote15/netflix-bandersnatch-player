@@ -4,6 +4,7 @@ class VideoPlayer {
     this.manifestJSON = manifestJSON;
     this.videoElement = null;
     this.sourceBuffer = null;
+    this.videoDuration = 0;
   }
 
   initializeCodec() {
@@ -42,7 +43,7 @@ class VideoPlayer {
       const selected = (this.selected = this.manifestJSON.intro);
 
       // evita rodar como "LIVE"
-      mediaSource.duration = 0;
+      mediaSource.duration = this.videoDuration;
       await this.fileDownload(selected.url);
     };
   }
@@ -57,5 +58,15 @@ class VideoPlayer {
 
     const finalUrl = this.network.parseManifestURL(prepareUrl);
     console.log("finalUrl", finalUrl);
+    this.setVideoPlayerDuration(finalUrl);
+  }
+
+  setVideoPlayerDuration(finalUrl) {
+    //finalUrl http://127.0.0.1:8081/timeline/01.intro/01.intro-12.733333-360.mp4
+
+    const bars = finalUrl.split("/");
+    const [name, videoDuration] = bars[bars.length - 1].split("-");
+    this.videoDuration += Number(videoDuration);
+    console.log("video duration:", this.videoDuration);
   }
 }

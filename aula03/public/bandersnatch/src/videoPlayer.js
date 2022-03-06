@@ -1,5 +1,6 @@
 class VideoPlayer {
-  constructor({ manifestJSON, network }) {
+  constructor({ manifestJSON, network, videoComponent }) {
+    this.videoComponent = videoComponent;
     this.network = network;
     this.manifestJSON = manifestJSON;
     this.videoElement = null;
@@ -45,10 +46,13 @@ class VideoPlayer {
       // evita rodar como "LIVE"
       mediaSource.duration = this.videoDuration;
       await this.fileDownload(selected.url);
+      this.waitForQuestions();
     };
   }
 
-  waitForQuestions() {}
+  waitForQuestions() {
+    this.videoComponent.configureModal(this.selected.options);
+  }
 
   async fileDownload(url) {
     const prepareUrl = {

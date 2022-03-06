@@ -48,7 +48,7 @@ class VideoPlayer {
     };
   }
 
-  fileDownload(url) {
+  async fileDownload(url) {
     const prepareUrl = {
       url,
       fileResolution: 360,
@@ -59,6 +59,8 @@ class VideoPlayer {
     const finalUrl = this.network.parseManifestURL(prepareUrl);
     console.log("finalUrl", finalUrl);
     this.setVideoPlayerDuration(finalUrl);
+    const data = await this.network.fetchFile(finalUrl);
+    await this.processBufferSegments(data);
   }
 
   setVideoPlayerDuration(finalUrl) {
@@ -68,5 +70,28 @@ class VideoPlayer {
     const [name, videoDuration] = bars[bars.length - 1].split("-");
     this.videoDuration += Number(videoDuration);
     console.log("video duration:", this.videoDuration);
+  }
+
+  async processBufferSegments(allSegments) {
+    const sourceBuffer = this.sourceBuffer;
+    sourceBuffer.appendBuffer(allSegments);
+
+    return new Promise((resolve, reject) => {
+      // Quando chegar bytes novos, atualiza e remove o eventListenet
+      // Para evitar loop infinitos no updateend event
+      const updateEnd = () => {
+        sourceBuffer.removeEventListener("updateend", updateEnd);
+
+        // Netflix talks about this timestamp offset
+        // para sincronizar o player com o tempo correto
+        sourceBuffer.timestampOffset = this.videoDuration;
+
+        return resolve();
+      };
+
+      sourceBuffer.addEventListener("updateend", updateEnd);
+
+      sourceBuffer.addEventListener("error", reject);
+    });
   }
 }
